@@ -258,7 +258,8 @@ async function render() {
   } finally {
     if (id === state.request) {
       content.setAttribute("aria-busy", "false");
-      if (document.activeElement === document.body) $("#main").focus();
+      if (document.activeElement === document.body)
+        $("#main").focus({ preventScroll: true });
     }
   }
 }

@@ -74,6 +74,13 @@ const { default: AxeBuilder } = require("@axe-core/playwright");
   await page
     .getByRole("button", { name: "Nadia Putri", exact: true })
     .waitFor();
+  if (await page.getByRole("button", { name: "Analisis ulang" }).count()) {
+    await page.getByRole("button", { name: "Analisis ulang" }).click();
+    await page
+      .getByRole("button", { name: "Analisis ulang" })
+      .waitFor({ state: "hidden" });
+  }
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: "artifacts/workspace-desktop.png",
     fullPage: true,
