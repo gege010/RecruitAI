@@ -40,6 +40,8 @@ Candidate names/search are transient PII and excluded from browser history.
 - Search is IME-safe, 300ms debounced, cancellation and sequence-guarded.
 - Network failure offers retry. Upload cancellation can race with completion;
   refresh and duplicate detection reconcile the actual state.
+- Session expiry suspends dirty forms/dialogs in memory during login, then restores
+  their DOM and input state. Drafts are never persisted to browser storage.
 - All candidate text is escaped before insertion into HTML.
 
 ## Soft-delete vs hard-delete policy

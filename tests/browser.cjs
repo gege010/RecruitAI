@@ -114,6 +114,46 @@ const { default: AxeBuilder } = require("@axe-core/playwright");
     .getByRole("heading", { name: "Prioritas yang mencerminkan kebutuhan." })
     .waitFor();
   await scan("criteria form");
+  // Simulate session expiry and re-authentication without real credentials.
+  await page.locator("#weight-education").press("ArrowRight");
+  await page.locator("#weight-skills").press("ArrowLeft");
+  const draftWeight = await page.locator("#weight-education").inputValue();
+  const jobId = await page.locator("#job-select").inputValue();
+  await page.route(
+    `${base}/api/jobs/${jobId}`,
+    (route) =>
+      route.fulfill({
+        status: 401,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "Sesi berakhir." }),
+      }),
+    { times: 1 },
+  );
+  await page.getByRole("button", { name: "Simpan kriteria" }).click();
+  await page
+    .getByRole("heading", { name: "Selamat datang kembali." })
+    .waitFor();
+  await page.route(
+    "**/api/login",
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: '{"ok":true}',
+      }),
+    { times: 1 },
+  );
+  await page
+    .getByLabel("Kata sandi ruang kerja")
+    .fill("test-only-mocked-login");
+  await page.getByRole("button", { name: "Masuk ke ruang kerja" }).click();
+  await page
+    .getByRole("heading", { name: "Prioritas yang mencerminkan kebutuhan." })
+    .waitFor();
+  assert.equal(
+    await page.locator("#weight-education").inputValue(),
+    draftWeight,
+  );
   await page.getByRole("button", { name: "Simpan kriteria" }).click();
   await page.getByRole("link", { name: "Lowongan", exact: true }).click();
   await page
@@ -211,6 +251,7 @@ const { default: AxeBuilder } = require("@axe-core/playwright");
           "mobile overflow",
           "network failure/retry",
           "reduced motion",
+          "session expiry and in-memory draft recovery",
         ],
       },
       null,

@@ -14,6 +14,7 @@ Verified locally for the v2 implementation using an isolated Python 3.11 environ
 | Desktop 1440x1080 and mobile 390x844 | Passed; screenshots in artifacts |
 | Keyboard Escape and focus restoration | Passed |
 | Network failure and retry | Passed |
+| Session expiry and draft recovery | Passed using mocked expiry/login in browser |
 | Axe WCAG A/AA automated checks | No violations in four tested states |
 | Runtime action bindings | All visible non-submit buttons bound in four states |
 | Runtime dependency audit | No known vulnerabilities; artifacts/dependency-audit.json |

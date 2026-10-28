@@ -66,6 +66,7 @@ const state = {
   dirty: false,
 };
 const content = $("#content");
+let suspendedWorkspace = null;
 let toastTimer,
   searchTimer,
   controller,
@@ -123,6 +124,12 @@ async function api(url, options = {}) {
       const payload = await response.json().catch(() => ({}));
       if (response.status === 401 && !url.endsWith("/login")) {
         state.session.authenticated = false;
+        if (!suspendedWorkspace && (state.dirty || $("#modal").open)) {
+          const draft = document.createDocumentFragment();
+          while (content.firstChild) draft.append(content.firstChild);
+          suspendedWorkspace = { draft, dialogOpen: $("#modal").open };
+          $("#modal").close();
+        }
         showLogin();
       }
       const detail = Array.isArray(payload.detail)
@@ -971,6 +978,10 @@ function guardPageChange(next) {
   next();
 }
 async function navigate(view) {
+  if (!state.session?.authenticated) {
+    $("#password")?.focus();
+    return;
+  }
   clearTimeout(searchTimer);
   guardPageChange(() => {
     state.view = view;
@@ -999,7 +1010,13 @@ function showLogin() {
         method: "POST",
         body: JSON.stringify({ password: $("#password").value }),
       });
-      await start();
+      if (suspendedWorkspace) {
+        state.session = await api("/api/session");
+        content.replaceChildren(suspendedWorkspace.draft);
+        if (suspendedWorkspace.dialogOpen) $("#modal").showModal();
+        suspendedWorkspace = null;
+        notify("Sesi dipulihkan. Periksa isian lalu simpan kembali.");
+      } else await start();
     } catch (error) {
       formError(e.target, error.message, "password");
     } finally {

@@ -18,6 +18,7 @@
     "keyboard Escape/focus restore",
     "mobile overflow",
     "network failure/retry",
-    "reduced motion"
+    "reduced motion",
+    "session expiry and in-memory draft recovery"
   ]
 }
