@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#172b42" />
+    <title>Ruang seleksi · RecruitAI</title>
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/assets/styles.css" />
+    <script src="/assets/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Lewati ke konten</a>
+    <aside class="sidebar" aria-label="Navigasi utama">
+      <a class="brand" href="#candidates"
+        ><span class="brandmark">r<span></span></span
+        ><span
+          >recruit<span class="brand-ai">ai</span
+          ><small>THE HIRING WORKSPACE</small></span
+        ></a
+      >
+      <div class="workspace">
+        <span class="workspace-icon">W</span>
+        <div>Workspace Anda<small>Talent acquisition</small></div>
+        <span class="workspace-dot"></span>
+      </div>
+      <span class="nav-label">REKRUTMEN</span>
+      <nav>
+        <a href="#candidates" data-view="candidates"
+          ><span data-icon="users"></span>Kandidat<span
+            class="nav-count"
+            id="nav-count"
+            >0</span
+          ></a
+        >
+        <a href="#jobs" data-view="jobs"
+          ><span data-icon="briefcase"></span>Lowongan</a
+        >
+        <a href="#criteria" data-view="criteria"
+          ><span data-icon="sliders"></span>Kriteria seleksi</a
+        >
+        <a href="#activity" data-view="activity"
+          ><span data-icon="clock"></span>Aktivitas</a
+        >
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="human-note">
+          <span data-icon="shield"></span
+          ><strong>Keputusan tetap di tangan Anda.</strong>
+          <p>AI membantu membaca bukti. Anda menentukan langkah berikutnya.</p>
+        </div>
+        <div class="account">
+          <span class="avatar account-avatar">HR</span>
+          <div>
+            Tim rekrutmen<small id="session-label">Ruang kerja lokal</small>
+          </div>
+          <button
+            class="icon-button"
+            id="logout"
+            aria-label="Keluar dari ruang kerja"
+            hidden
+          >
+            <span data-icon="logout"></span>
+          </button>
+        </div>
+      </div>
+    </aside>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="breadcrumbs">
+          Workspace <span>/</span> Rekrutmen <span>/</span>
+          <strong id="breadcrumb">Kandidat</strong>
+        </div>
+        <div class="topbar-right">
+          <span class="local-status"
+            ><i></i><span id="mode-label">Pemrosesan lokal</span></span
+          ><span class="avatar small-avatar">HR</span>
+        </div>
+      </header>
+      <main id="main" tabindex="-1">
+        <div id="content" aria-busy="true">
+          <div class="loading">
+            <span class="spinner"></span>Menyiapkan ruang kerja…
+          </div>
+        </div>
+      </main>
+      <footer class="page-footer">
+        <span
+          >RecruitAI <span class="footer-dot">·</span> Seleksi dengan alasan
+          yang jelas.</span
+        ><span>Ruang kerja rekrutmen / v2.0</span>
+      </footer>
+    </div>
+    <dialog id="modal" aria-labelledby="modal-title">
+      <div class="dialog-heading">
+        <div>
+          <span class="eyebrow" id="modal-eyebrow">RUANG SELEKSI</span>
+          <h2 id="modal-title"></h2>
+        </div>
+        <button class="icon-button" id="modal-close" aria-label="Tutup dialog">
+          <span data-icon="x"></span>
+        </button>
+      </div>
+      <div id="modal-body"></div>
+    </dialog>
+    <div id="notification" role="status" aria-live="polite"></div>
+  </body>
+</html>

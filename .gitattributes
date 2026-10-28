@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.png binary
+*.woff2 binary
+*.md whitespace=-blank-at-eol
+web/fonts/*-OFL.txt whitespace=-blank-at-eol

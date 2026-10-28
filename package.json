@@ -1,0 +1,16 @@
+{
+  "name": "recruitai-workspace",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "check": "node --check web/app.js",
+    "format": "prettier --write web tests/browser.cjs package.json premium-ui.json",
+    "format:check": "prettier --check web tests/browser.cjs package.json premium-ui.json",
+    "test:browser": "node tests/browser.cjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "playwright": "1.62.1",
+    "prettier": "3.5.3"
+  }
+}

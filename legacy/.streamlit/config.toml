@@ -1,0 +1,17 @@
+# Resume Auto-Selection DSS — .streamlit config
+[server]
+port = 8501
+address = "localhost"
+maxUploadSize = 100
+fileWatcherType = "none"
+
+[theme]
+base = "dark"
+primaryColor = "#a78bfa"
+backgroundColor = "#0f172a"
+secondaryBackgroundColor = "#1e293b"
+textColor = "#e2e8f0"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false

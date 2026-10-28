@@ -1,0 +1,35 @@
+name: Application checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: pip install -r requirements-dev.txt
+      - run: npm ci
+      - run: ruff check server tests core/mcdm
+      - run: ruff format --check server tests core/mcdm
+      - run: python -m pytest -q
+      - run: pip install pip-audit==2.9.0 && pip-audit -r requirements.lock --no-deps --progress-spinner off
+      - run: npm run check
+      - run: npm run format:check
+      - run: npx playwright install --with-deps chromium
+      - name: Browser integration
+        run: |
+          RECRUITAI_DB=var/browser-ci.sqlite3 uvicorn server.main:app --host 127.0.0.1 --port 8001 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8001/health && break || sleep 1; done
+          npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-evidence
+          path: artifacts/

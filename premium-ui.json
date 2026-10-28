@@ -1,0 +1,23 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["web"],
+  "locale": "id-ID",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": [
+    "Select/Listbox",
+    "Form",
+    "Scrollbar",
+    "Toast",
+    "CRUD"
+  ],
+  "ownership": { "Select/Listbox": "native" },
+  "requiredCommands": ["unit", "syntax"],
+  "commands": {
+    "unit": "python -m pytest -q",
+    "syntax": "node --check web/app.js"
+  },
+  "evidence": {
+    "crudFullFlow": "tests/browser.cjs",
+    "failurePaths": "tests/test_workspace.py"
+  }
+}
