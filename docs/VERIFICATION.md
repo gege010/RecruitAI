@@ -1,6 +1,6 @@
 # Verification evidence
 
-Verified locally for the v2 implementation using an isolated Python 3.11 environment.
+Verified locally for RecruitAI Workspace using an isolated Python 3.11 environment.
 
 | Check | Result |
 |---|---|

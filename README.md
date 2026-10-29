@@ -2,7 +2,8 @@
 
 Ruang seleksi kandidat berbasis web untuk tim HR: lowongan yang dapat dikustomisasi,
 ekstraksi CV, pembandingan multi-kriteria, dan keputusan manusia yang dapat ditelusuri.
-Aplikasi v2 menggunakan FastAPI dan antarmuka web mandiri, tanpa Streamlit.
+Aplikasi menggunakan FastAPI dan antarmuka web mandiri, tanpa Streamlit.
+Rilis original RecruitAI Workspace ditetapkan sebagai versi 1.0.0.
 
 ## Jalankan di Windows
 
@@ -81,13 +82,13 @@ uji ada dalam `artifacts/`.
 - `core/mcdm/`: AHP, SAW, WP, TOPSIS, Borda dan validasi numerik.
 - `tests/`: pengujian perhitungan, API, PDF, desain dan browser.
 - `DESIGN.md`, `UX-CONTRACT.md`, `PRODUCT.md`: kontrak desain dan produk.
-- `legacy/`: sumber prototipe kuliah (Streamlit/Supabase), tidak dipakai oleh v2.
+- `legacy/`: sumber prototipe kuliah (Streamlit/Supabase), tidak dipakai oleh aplikasi.
 - `docs/LEGACY-README.md` dan `DOCUMENTATION.md`: referensi proyek awal.
 
 ## Repository dan asal proyek
 
-Pengembangan v2 dipisahkan dari repository tugas kuliah. Riwayat Git lama disimpan
+RecruitAI Workspace merupakan proyek original yang dipisahkan dari repository tugas kuliah. Riwayat Git lama disimpan
 lokal di `.git-history/` dan tidak dikirim ke repository baru. `.env`, data kandidat,
 venv dan backup riwayat diabaikan Git. Sumber serta atribusi tim awal dipertahankan
 di dokumen lama. Tidak ada migrasi otomatis atau perubahan pada database Supabase
-lama; v2 memakai penyimpanan sendiri.
+lama; aplikasi memakai penyimpanan sendiri.

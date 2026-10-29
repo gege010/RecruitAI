@@ -52,7 +52,7 @@ async def lifespan(app):
 
 app = FastAPI(
     title="RecruitAI Workspace",
-    version="2.0.0",
+    version="1.0.0",
     lifespan=lifespan,
     docs_url=None if os.getenv("APP_ENV") == "production" else "/docs",
 )
@@ -126,7 +126,7 @@ def get_job(db, job_id):
 def health():
     with store.connect() as db:
         db.execute("SELECT 1")
-    return {"status": "ok", "version": "2.0.0"}
+    return {"status": "ok", "version": "1.0.0"}
 
 
 @app.get("/api/session")
@@ -425,7 +425,7 @@ def run_analysis(job_id: str):
             )
         results = analyze(items, job)
         snapshot = {
-            "engine": "evidence-mcdm/2.0",
+            "engine": "evidence-mcdm/1.0",
             "job_version": job["version"],
             "job": job,
             "candidate_ids": sorted(c["id"] for c in items),

@@ -1,6 +1,6 @@
 # Product and deployment contract
 
-RecruitAI v2 is a decision-support workspace for one organization, operated by a
+RecruitAI is a decision-support workspace for one organization, operated by a
 trusted HR team. Extraction and comparison are automated; humans record shortlist,
 hold and rejection decisions. No automated applicant rejection or messaging.
 

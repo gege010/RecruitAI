@@ -65,7 +65,7 @@ behavior, not a penetration test or certification.
 
 ## Legacy separation
 
-The original Supabase project is not called by the v2 runtime. No migration or
+The original Supabase project is not called by the application runtime. No migration or
 deletion was performed on that service. Legacy modules remain reference material.
 The previous Git history is recoverable locally from .git-history and is excluded
 from commits. Existing DOCUMENTATION.md changes were preserved.
