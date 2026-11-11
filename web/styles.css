@@ -170,6 +170,9 @@ strong {
   top: 10px;
 }
 .sidebar {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding-inline: 20px;
   background: var(--ink);
   color: #c7d2de;
   z-index: 5;
@@ -177,10 +180,10 @@ strong {
 .sidebar-inner {
   position: sticky;
   top: 0;
-  height: 100vh;
-  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
   overflow-y: auto;
-  padding: 30px 20px 0;
+  padding: 30px 0 1px;
   display: flex;
   flex-direction: column;
 }
@@ -296,8 +299,7 @@ nav a svg {
   font-size: 10px;
 }
 .sidebar-bottom {
-  flex-shrink: 0;
-  margin-top: auto;
+  margin-top: 24px;
 }
 .human-note {
   border-top: 1px solid #35485b;
@@ -1602,9 +1604,8 @@ dialog[open] {
   body {
     --sidebar-width: 210px;
   }
-  .sidebar-inner {
-    padding-left: 14px;
-    padding-right: 14px;
+  .sidebar {
+    padding-inline: 14px;
   }
   main {
     padding: 30px 26px;
@@ -1694,11 +1695,15 @@ dialog[open] {
   body {
     display: block;
   }
+  .sidebar {
+    display: block;
+    padding-inline: 18px;
+  }
   .sidebar-inner {
     position: static;
-    height: auto;
+    max-height: none;
     overflow: visible;
-    padding: 17px 18px 0;
+    padding: 17px 0 0;
     display: block;
   }
   .brand {

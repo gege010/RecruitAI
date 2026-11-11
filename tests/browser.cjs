@@ -85,6 +85,14 @@ const { default: AxeBuilder } = require("@axe-core/playwright");
     pageHeight: document.documentElement.scrollHeight,
   }));
   assert.equal(sidebar.height, sidebar.pageHeight);
+  const footerGap = await page
+    .locator(".sidebar-bottom")
+    .evaluate(
+      (element) =>
+        element.closest(".sidebar").getBoundingClientRect().bottom -
+        element.getBoundingClientRect().bottom,
+    );
+  assert.equal(footerGap, 0);
   await page.evaluate(() =>
     window.scrollTo(0, document.documentElement.scrollHeight),
   );
