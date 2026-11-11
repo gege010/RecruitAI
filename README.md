@@ -1,94 +1,105 @@
-# RecruitAI Workspace
+# RecruitAI
 
-Ruang seleksi kandidat berbasis web untuk tim HR: lowongan yang dapat dikustomisasi,
-ekstraksi CV, pembandingan multi-kriteria, dan keputusan manusia yang dapat ditelusuri.
-Aplikasi menggunakan FastAPI dan antarmuka web mandiri, tanpa Streamlit.
-Rilis original RecruitAI Workspace ditetapkan sebagai versi 1.0.0.
+RecruitAI membantu tim HR membandingkan kandidat untuk satu lowongan. Tim
+menetapkan kriteria, memeriksa profil dari CV, lalu melihat bukti di balik skor
+sebelum mencatat keputusan. Ruang kerja berjalan di browser dan menyimpan data
+di SQLite pada mesin yang menjalankannya.
 
-## Jalankan di Windows
+![Daftar kandidat fiktif dengan skor kesesuaian dan bobot kriteria](artifacts/workspace-desktop.png)
+
+## Mulai
+
+Pasang **Python 3.11 atau 3.12**. Clone repositori atau unduh dan ekstrak ZIP
+dari menu **Code** di GitHub.
+
+```sh
+git clone https://github.com/gege010/RecruitAI.git
+cd RecruitAI
+```
+
+**Windows** (PowerShell)
 
 ```powershell
-python -m venv .venv
+py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m uvicorn server.main:app --host 127.0.0.1 --port 8000 --no-access-log
+.\.venv\Scripts\python.exe -m uvicorn server.main:app --host 127.0.0.1 --port 8000
 ```
 
-Buka http://127.0.0.1:8000. Ruang kerja dimulai kosong. Buat lowongan pertama atau
-pilih **Jelajahi data contoh** untuk memuat enam profil fiktif. Data disimpan dalam
-`var/recruitai.sqlite3`. Salin `.env.example` ke `.env` hanya jika belum memiliki
-konfigurasi; jangan menimpa kredensial yang sudah ada.
+**macOS dan Linux**
 
-## Alur penggunaan
-
-1. Buat lowongan: keahlian, durasi pengalaman, pendidikan, sertifikasi, bahasa.
-2. Tambah kandidat melalui PDF atau profil manual. PDF maksimal 10 MB / 20 halaman.
-3. Verifikasi profil: nama, keahlian, pendidikan, durasi pengalaman dan bahasa.
-4. Atur lima bobot hingga total 100% pada Kriteria seleksi.
-5. Jalankan analisis. SAW, WP, TOPSIS digabung dengan Borda; nilai sama tetap seri.
-6. Buka bukti kandidat; simpan shortlist, pertimbangkan atau tidak dilanjutkan.
-   Keputusan tidak dilanjutkan wajib memiliki catatan.
-7. Ekspor CSV dari snapshot analisis. Status dalam CSV adalah status saat analisis.
-
-Skor persen berarti kesesuaian terhadap persyaratan yang diisi, bukan peluang
-keberhasilan kerja. Informasi belum diketahui perlu diverifikasi. Mengubah kandidat
-atau kriteria menandai hasil lama; jalankan analisis ulang untuk memperbaruinya.
-
-## AI dan pemrosesan lokal
-
-Ekstraksi lokal menggunakan teks PDF dan pencocokan kata kunci eksplisit. Durasi
-pengalaman tidak ditebak. PDF scan belum didukung; gunakan PDF teks atau profil
-manual. Groq bersifat opsional: atur `GROQ_API_KEY`, lalu pilih bantuan AI pada
-unggahan. Hanya pilihan tersebut yang mengirim teks CV ke Groq. Hasil AI tetap
-harus diverifikasi. Tidak ada panggilan AI untuk menentukan keputusan HR.
-
-## Deployment
-
-```powershell
-# Atur RECRUITAI_PASSWORD (minimal 16 karakter) dan RECRUITAI_ORIGIN pada .env
-# Hubungkan reverse proxy HTTPS ke 127.0.0.1:8000
-docker compose up --build -d
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m uvicorn server.main:app --host 127.0.0.1 --port 8000
 ```
 
-Image berjalan sebagai pengguna non-root, filesystem read-only dan volume data
-persisten. Mode production menolak kata sandi lemah. Cookie production hanya dapat
-digunakan melalui HTTPS; membuka container langsung melalui HTTP bukan alur login
-production yang didukung. Endpoint `/health` memeriksa database. Proxy wajib
-membatasi request 12 MB, timeout dan laju permintaan. Gunakan satu worker/replica.
+Jika memakai Python 3.12 di Windows, ganti `py -3.11` dengan `py -3.12`.
 
-Ini merupakan implementasi satu organisasi dengan satu kata sandi tim. Sebelum
-menggunakan data kandidat nyata, lengkapi retensi/penghapusan data, backup terenkripsi,
-uji restore, evaluasi kualitas ekstraksi, dan review keamanan dependensi. Belum
-mencakup multi-tenant, SSO/RBAC individual, OCR scan, antrean worker terdistribusi,
-atau validasi fairness model. Lihat PRODUCT.md dan docs/OPERATIONS.md.
+Setelah server berjalan, buka [127.0.0.1:8000](http://127.0.0.1:8000).
+Pilih **Jelajahi data contoh** untuk mencoba alur seleksi dengan enam profil
+fiktif, atau **Buat lowongan pertama** untuk mulai dari ruang kerja kosong.
 
-## Verifikasi
+Internet diperlukan saat memasang dependensi. Setelah itu, pemrosesan lokal
+bisa berjalan offline tanpa akun, API key, Node.js, atau Docker. Tekan
+**Ctrl+C** untuk menghentikan server.
 
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
-.\.venv\Scripts\python.exe -m pytest -q
-node --check web/app.js
+## Alur seleksi
+
+1. **Buat lowongan.** Isi persyaratan keahlian, pengalaman, pendidikan,
+   sertifikasi, dan bahasa. Atur bobot sesuai kebutuhan posisi.
+2. **Tambahkan dan periksa profil.** Unggah PDF berbasis teks hingga 10 MB dan
+   20 halaman, atau masukkan profil secara manual. Untuk CV hasil pindai,
+   gunakan input manual.
+3. **Jalankan analisis.** Tambahkan minimal dua kandidat untuk membandingkan
+   peringkat. Skor persentase menunjukkan tingkat pemenuhan persyaratan posisi.
+4. **Tinjau bukti dan catat keputusan.** Pilih shortlist, pertimbangkan, atau
+   tidak dilanjutkan. Keputusan tidak dilanjutkan memerlukan catatan.
+5. **Ekspor CSV.** Ekspor memakai skor dan status dari snapshot analisis.
+   Jalankan ulang analisis untuk memperbarui snapshot setelah profil, kriteria,
+   atau status tinjauan berubah.
+
+## Data dan penggunaan tim
+
+Database default berada di `var/recruitai.sqlite3`. Aplikasi menyimpan profil
+terstruktur, catatan tinjauan, dan snapshot analisis. File PDF asli diproses
+sementara. Jika tim mengaktifkan Groq, teks CV dikirim ke layanan tersebut hanya
+saat pengguna memilih bantuan AI pada unggahan. Lihat [`.env.example`](.env.example)
+untuk pengaturan opsional.
+
+Deploy bersama ditujukan untuk satu organisasi dan satu tim HR dengan kata
+sandi bersama. Untuk konfigurasi HTTPS, cadangan, dan retensi sebelum memakai
+data kandidat nyata, ikuti [panduan operasional](docs/OPERATIONS.md).
+
+## Pengembangan
+
+FastAPI menyajikan API dan antarmuka HTML, CSS, serta JavaScript. Kode aplikasi
+ada di [`server/`](server/) dan [`web/`](web/). Metode SAW, Weighted Product,
+TOPSIS, dan agregasi Borda ada di [`core/mcdm/`](core/mcdm/).
+
+Aktifkan `.venv`, lalu jalankan pemeriksaan Python:
+
+```sh
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+python -m ruff check server tests core/mcdm
+python -m ruff format --check server tests core/mcdm
 ```
 
-Pengujian browser `tests/browser.cjs` memerlukan Playwright dan Chromium. Jalankan
-server pada database uji kosong (`RECRUITAI_DB=var/browser-test.sqlite3`) di port
-8001; atur `PLAYWRIGHT_MODULE`, `CHROME_PATH` dan `TEST_URL` sesuai perangkat.
-Jangan arahkan pengujian ke ruang kerja dengan data nyata. Screenshot dan laporan
-uji ada dalam `artifacts/`.
+Pemeriksaan frontend memerlukan Node.js. Jalankan `npm ci`, `npm run check`,
+dan `npm run format:check`. Untuk pengujian Playwright, gunakan Chromium dan
+server dengan database uji kosong di port 8001. Perintah lengkap tersedia di
+[workflow CI](.github/workflows/checks.yml).
 
-## Struktur
+## Kontribusi
 
-- `server/`: API, sesi, SQLite, ekstraksi, penilaian, dan snapshot.
-- `web/`: antarmuka, komponen bersama, desain responsif dan font lokal berlisensi.
-- `core/mcdm/`: AHP, SAW, WP, TOPSIS, Borda dan validasi numerik.
-- `tests/`: pengujian perhitungan, API, PDF, desain dan browser.
-- `DESIGN.md`, `UX-CONTRACT.md`, `PRODUCT.md`: kontrak desain dan produk.
-- `legacy/`: sumber prototipe kuliah (Streamlit/Supabase), tidak dipakai oleh aplikasi.
-- `docs/LEGACY-README.md` dan `DOCUMENTATION.md`: referensi proyek awal.
+Untuk melaporkan bug, buka [issue](https://github.com/gege010/RecruitAI/issues)
+dengan langkah reproduksi, sistem operasi, versi Python, dan hasil yang
+diharapkan. Gunakan profil fiktif pada contoh dan tangkapan layar. Untuk
+perubahan kode, jalankan pemeriksaan yang relevan sebelum membuka pull request.
 
-## Repository dan asal proyek
+## Dokumentasi
 
-RecruitAI Workspace merupakan proyek original yang dipisahkan dari repository tugas kuliah. Riwayat Git lama disimpan
-lokal di `.git-history/` dan tidak dikirim ke repository baru. `.env`, data kandidat,
-venv dan backup riwayat diabaikan Git. Sumber serta atribusi tim awal dipertahankan
-di dokumen lama. Tidak ada migrasi otomatis atau perubahan pada database Supabase
-lama; aplikasi memakai penyimpanan sendiri.
+- [Kontrak produk](PRODUCT.md) menjelaskan cara membaca skor, batas otorisasi, dan penyimpanan data.
+- [Sistem desain](DESIGN.md) mendokumentasikan pola antarmuka dan aksesibilitas.
+- [Catatan verifikasi](docs/VERIFICATION.md) mencatat hasil pengujian dan cakupannya.
+- [Prototipe awal](docs/LEGACY-README.md) menyimpan dokumentasi dan atribusi proyek kuliah.
