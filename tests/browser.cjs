@@ -80,6 +80,24 @@ const { default: AxeBuilder } = require("@axe-core/playwright");
       .getByRole("button", { name: "Analisis ulang" })
       .waitFor({ state: "hidden" });
   }
+  const sidebar = await page.locator(".sidebar").evaluate((element) => ({
+    height: element.offsetHeight,
+    pageHeight: document.documentElement.scrollHeight,
+  }));
+  assert.equal(sidebar.height, sidebar.pageHeight);
+  await page.evaluate(() =>
+    window.scrollTo(0, document.documentElement.scrollHeight),
+  );
+  assert.equal(
+    await page
+      .locator(".sidebar-inner")
+      .evaluate((element) => element.getBoundingClientRect().top),
+    0,
+  );
+  await page
+    .locator("#notification:not(.visible)")
+    .waitFor({ state: "attached" });
+  await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: "artifacts/workspace-desktop.png",
