@@ -1,105 +1,58 @@
 # RecruitAI
 
-RecruitAI membantu tim HR membandingkan kandidat untuk satu lowongan. Tim
-menetapkan kriteria, memeriksa profil dari CV, lalu melihat bukti di balik skor
-sebelum mencatat keputusan. Ruang kerja berjalan di browser dan menyimpan data
-di SQLite pada mesin yang menjalankannya.
+RecruitAI is a local-first workspace for recruiters comparing candidates for a specific role. Define the requirements, check the evidence extracted from each résumé, and see how candidates rank under your chosen criteria. The recruiter records the final decision. The interface is in Indonesian.
 
-![Daftar kandidat fiktif dengan skor kesesuaian dan bobot kriteria](artifacts/workspace-desktop.png)
+![RecruitAI candidate list showing fictional profiles, fit scores, review status, and the weights for the selected role](artifacts/workspace-desktop.png)
 
-## Mulai
+## Quick start
 
-Pasang **Python 3.11 atau 3.12**. Clone repositori atau unduh dan ekstrak ZIP
-dari menu **Code** di GitHub.
+Install **Python 3.11 or 3.12**, then clone the repository. You can also download and extract the ZIP from GitHub’s **Code** menu.
 
 ```sh
 git clone https://github.com/gege010/RecruitAI.git
 cd RecruitAI
 ```
 
-**Windows** (PowerShell)
-
-```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m uvicorn server.main:app --host 127.0.0.1 --port 8000
-```
-
-**macOS dan Linux**
+On **Windows**, double-click **Start RecruitAI.cmd** in the repository folder. On **macOS or Linux**, run the launcher with your supported Python interpreter.
 
 ```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python -m uvicorn server.main:app --host 127.0.0.1 --port 8000
+python3 run_local.py
 ```
 
-Jika memakai Python 3.12 di Windows, ganti `py -3.11` dengan `py -3.12`.
+The launcher creates a virtual environment and installs dependencies on the first run, which requires an internet connection. Open [the local workspace](http://127.0.0.1:8000) and select **Jelajahi data contoh** to explore six fictional profiles. Choose **Buat lowongan pertama** to start with your own vacancy. Local screening works offline after setup. Press **Ctrl+C** in the terminal to stop the server.
 
-Setelah server berjalan, buka [127.0.0.1:8000](http://127.0.0.1:8000).
-Pilih **Jelajahi data contoh** untuk mencoba alur seleksi dengan enam profil
-fiktif, atau **Buat lowongan pertama** untuk mulai dari ruang kerja kosong.
+## Screen a vacancy
 
-Internet diperlukan saat memasang dependensi. Setelah itu, pemrosesan lokal
-bisa berjalan offline tanpa akun, API key, Node.js, atau Docker. Tekan
-**Ctrl+C** untuk menghentikan server.
+1. **Define the role.** Set requirements and weights for skills, experience, education, certifications, and languages.
+2. **Check the profiles.** Upload text-based PDFs of up to 10 MB and 20 pages each. Verify the extracted fields and correct them before analysis. Use manual entry for scanned résumés.
+3. **Compare candidates.** Run the analysis with at least two profiles. The fit score shows how much of the role’s requirements the profile satisfies. The relative ranking combines SAW, Weighted Product, and TOPSIS using Borda aggregation.
+4. **Record a decision.** Review the evidence, then shortlist, place on hold, or decline. A decline requires a note.
+5. **Export a snapshot.** Download the analysis as CSV. Run the analysis again to include subsequent edits or review decisions in the export.
 
-## Alur seleksi
+## Data and deployment
 
-1. **Buat lowongan.** Isi persyaratan keahlian, pengalaman, pendidikan,
-   sertifikasi, dan bahasa. Atur bobot sesuai kebutuhan posisi.
-2. **Tambahkan dan periksa profil.** Unggah PDF berbasis teks hingga 10 MB dan
-   20 halaman, atau masukkan profil secara manual. Untuk CV hasil pindai,
-   gunakan input manual.
-3. **Jalankan analisis.** Tambahkan minimal dua kandidat untuk membandingkan
-   peringkat. Skor persentase menunjukkan tingkat pemenuhan persyaratan posisi.
-4. **Tinjau bukti dan catat keputusan.** Pilih shortlist, pertimbangkan, atau
-   tidak dilanjutkan. Keputusan tidak dilanjutkan memerlukan catatan.
-5. **Ekspor CSV.** Ekspor memakai skor dan status dari snapshot analisis.
-   Jalankan ulang analisis untuk memperbarui snapshot setelah profil, kriteria,
-   atau status tinjauan berubah.
+The default SQLite database at `var/recruitai.sqlite3` stores structured profiles, review notes, and analysis snapshots. The application processes uploaded PDFs temporarily. Optional Groq-assisted extraction sends résumé text to Groq when the operator enables the integration and the recruiter selects it for an upload. See the [configuration example](.env.example).
 
-## Data dan penggunaan tim
+The local launcher binds to the loopback interface. Shared deployments use a single workspace password for one trusted HR team. Before handling real candidate data on a shared server, configure HTTPS, backups, access, and retention using the [operations guide](docs/OPERATIONS.md).
 
-Database default berada di `var/recruitai.sqlite3`. Aplikasi menyimpan profil
-terstruktur, catatan tinjauan, dan snapshot analisis. File PDF asli diproses
-sementara. Jika tim mengaktifkan Groq, teks CV dikirim ke layanan tersebut hanya
-saat pengguna memilih bantuan AI pada unggahan. Lihat [`.env.example`](.env.example)
-untuk pengaturan opsional.
+## Development
 
-Deploy bersama ditujukan untuk satu organisasi dan satu tim HR dengan kata
-sandi bersama. Untuk konfigurasi HTTPS, cadangan, dan retensi sebelum memakai
-data kandidat nyata, ikuti [panduan operasional](docs/OPERATIONS.md).
-
-## Pengembangan
-
-FastAPI menyajikan API dan antarmuka HTML, CSS, serta JavaScript. Kode aplikasi
-ada di [`server/`](server/) dan [`web/`](web/). Metode SAW, Weighted Product,
-TOPSIS, dan agregasi Borda ada di [`core/mcdm/`](core/mcdm/).
-
-Aktifkan `.venv`, lalu jalankan pemeriksaan Python:
+FastAPI serves the [Python API](server/) and the [HTML, CSS, and JavaScript interface](web/). The [ranking methods](core/mcdm/) are implemented separately. With the project virtual environment active, run the Python checks below.
 
 ```sh
 python -m pip install -r requirements-dev.txt
 python -m pytest -q
-python -m ruff check server tests core/mcdm
-python -m ruff format --check server tests core/mcdm
+python -m ruff check run_local.py server tests core/mcdm
+python -m ruff format --check run_local.py server tests core/mcdm
 ```
 
-Pemeriksaan frontend memerlukan Node.js. Jalankan `npm ci`, `npm run check`,
-dan `npm run format:check`. Untuk pengujian Playwright, gunakan Chromium dan
-server dengan database uji kosong di port 8001. Perintah lengkap tersedia di
-[workflow CI](.github/workflows/checks.yml).
+For frontend checks, use Node.js 22 and run `npm ci`, `npm run check`, and `npm run format:check`. The browser suite creates and edits fictional profiles. Follow the [CI workflow](.github/workflows/checks.yml) to run it with Chromium and a dedicated test database.
 
-## Kontribusi
+## Help and contributions
 
-Untuk melaporkan bug, buka [issue](https://github.com/gege010/RecruitAI/issues)
-dengan langkah reproduksi, sistem operasi, versi Python, dan hasil yang
-diharapkan. Gunakan profil fiktif pada contoh dan tangkapan layar. Untuk
-perubahan kode, jalankan pemeriksaan yang relevan sebelum membuka pull request.
+Maintained in the [gege010 GitHub account](https://github.com/gege010). To report a problem, [open an issue](https://github.com/gege010/RecruitAI/issues) with reproduction steps, your operating system and Python version, and the expected and observed behavior. Use fictional candidate data in reports and screenshots. For a code change, run the relevant checks and describe the behavior you verified in your pull request.
 
-## Dokumentasi
-
-- [Kontrak produk](PRODUCT.md) menjelaskan cara membaca skor, batas otorisasi, dan penyimpanan data.
-- [Sistem desain](DESIGN.md) mendokumentasikan pola antarmuka dan aksesibilitas.
-- [Catatan verifikasi](docs/VERIFICATION.md) mencatat hasil pengujian dan cakupannya.
-- [Prototipe awal](docs/LEGACY-README.md) menyimpan dokumentasi dan atribusi proyek kuliah.
+- [Product contract](PRODUCT.md) — scoring, review decisions, and data boundaries.
+- [Design system](DESIGN.md) — interface patterns and accessibility.
+- [Verification notes](docs/VERIFICATION.md) — test coverage and limitations.
+- [Original prototype](docs/LEGACY-README.md) — project history and academic credits.

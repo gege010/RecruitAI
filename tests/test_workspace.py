@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -155,10 +157,15 @@ def test_csrf_header_required(client):
 
 def test_demo_explicit_and_only_empty_workspace(client):
     assert client.get("/api/jobs").json() == []
-    assert client.post("/api/demo").status_code == 201
-    assert client.post("/api/demo").status_code == 409
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        requests = [pool.submit(client.post, "/api/demo") for _ in range(2)]
+        assert sorted(r.result().status_code for r in requests) == [201, 409]
+    assert len(client.get("/api/jobs").json()) == 1
     j = client.get("/api/jobs").json()[0]
     assert j["candidate_count"] == 6
+    filtered = client.get(f"/api/jobs/{j['id']}/candidates?status=shortlisted").json()
+    assert filtered["items"] == []
+    assert filtered["has_demo"]
 
 
 def test_search_pagination_and_status(client):

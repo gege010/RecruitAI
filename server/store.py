@@ -8,14 +8,15 @@ from pathlib import Path
 
 
 @contextmanager
-def connect():
+def connect(*, write=False):
     path = Path(os.getenv("RECRUITAI_DB", "var/recruitai.sqlite3"))
     path.parent.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect(path, timeout=15)
-    db.row_factory = sqlite3.Row
-    db.execute("PRAGMA foreign_keys=ON")
-    db.execute("PRAGMA journal_mode=WAL")
     try:
+        db.row_factory = sqlite3.Row
+        db.execute("PRAGMA foreign_keys=ON")
+        if write:
+            db.execute("BEGIN IMMEDIATE")
         yield db
         db.commit()
     except Exception:
@@ -27,6 +28,7 @@ def connect():
 
 def initialize():
     with connect() as db:
+        db.execute("PRAGMA journal_mode=WAL")
         db.executescript("""
         CREATE TABLE IF NOT EXISTS jobs (
           id TEXT PRIMARY KEY, data TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1,

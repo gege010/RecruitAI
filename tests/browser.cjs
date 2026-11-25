@@ -65,12 +65,17 @@ const { default: AxeBuilder } = require("@axe-core/playwright");
   fs.mkdirSync("artifacts", { recursive: true });
   await page.goto(base);
   await page.locator('#content[aria-busy="false"]').waitFor();
-  if (await page.getByRole("button", { name: "Jelajahi data contoh" }).count())
+  if (
+    await page.getByRole("button", { name: "Jelajahi data contoh" }).count()
+  ) {
+    await scan("first visit / desktop");
+    await page.screenshot({ path: "artifacts/workspace-welcome.png" });
     await page.getByRole("button", { name: "Jelajahi data contoh" }).click();
-  else
+  } else {
     await page
       .getByLabel("Pilih lowongan")
       .selectOption({ label: "Senior Frontend Engineer" });
+  }
   await page
     .getByRole("button", { name: "Nadia Putri", exact: true })
     .waitFor();
@@ -113,6 +118,11 @@ const { default: AxeBuilder } = require("@axe-core/playwright");
   });
   assert.equal(await page.locator("tbody tr").count(), 6);
   await scan("candidate list / desktop");
+  await page.getByRole("button", { name: "Lihat yang belum ditinjau" }).click();
+  await page
+    .locator('button[data-status="new"][aria-pressed="true"]')
+    .waitFor();
+  await page.getByRole("button", { name: /Semua kandidat/ }).click();
   await page.getByRole("button", { name: "Nadia Putri", exact: true }).click();
   await page.getByRole("dialog").waitFor();
   await scan("candidate profile dialog");
@@ -127,6 +137,7 @@ const { default: AxeBuilder } = require("@axe-core/playwright");
   await page
     .getByRole("heading", { name: "Tidak ada kandidat yang cocok" })
     .waitFor();
+  assert.equal(await page.locator(".sample-note").isVisible(), true);
   await page.getByRole("button", { name: "Hapus pencarian" }).click();
   await page
     .getByRole("button", { name: "Nadia Putri", exact: true })
@@ -136,16 +147,14 @@ const { default: AxeBuilder } = require("@axe-core/playwright");
   await page.getByLabel("Total pengalaman (bulan)").fill("54");
   await page.getByRole("button", { name: "Simpan profil" }).click();
   await page
-    .getByText("Kandidat atau kriteria telah berubah.", { exact: false })
+    .getByRole("heading", { name: "Perbarui hasil analisis" })
     .waitFor();
   await page.getByRole("button", { name: "Analisis ulang" }).click();
   await page
-    .getByText("Kandidat atau kriteria telah berubah.", { exact: false })
+    .getByRole("heading", { name: "Perbarui hasil analisis" })
     .waitFor({ state: "hidden" });
   await page.getByRole("button", { name: "Sesuaikan kriteria" }).click();
-  await page
-    .getByRole("heading", { name: "Prioritas yang mencerminkan kebutuhan." })
-    .waitFor();
+  await page.getByRole("heading", { name: "Kriteria seleksi" }).waitFor();
   await scan("criteria form");
   // Simulate session expiry and re-authentication without real credentials.
   await page.locator("#weight-education").press("ArrowRight");
@@ -180,9 +189,7 @@ const { default: AxeBuilder } = require("@axe-core/playwright");
     .getByLabel("Kata sandi ruang kerja")
     .fill("test-only-mocked-login");
   await page.getByRole("button", { name: "Masuk ke ruang kerja" }).click();
-  await page
-    .getByRole("heading", { name: "Prioritas yang mencerminkan kebutuhan." })
-    .waitFor();
+  await page.getByRole("heading", { name: "Kriteria seleksi" }).waitFor();
   assert.equal(
     await page.locator("#weight-education").inputValue(),
     draftWeight,
@@ -235,6 +242,13 @@ const { default: AxeBuilder } = require("@axe-core/playwright");
     ),
     true,
   );
+  assert.equal(
+    await page
+      .locator(".table-scroll")
+      .evaluate((table) => table.scrollWidth <= table.clientWidth),
+    true,
+    "Mobile readers can see scores and review status without scrolling sideways",
+  );
   await page.getByRole("button", { name: "Nadia Putri", exact: true }).click();
   await page.keyboard.press("Escape");
   await page.getByRole("dialog").waitFor({ state: "hidden" });
@@ -243,9 +257,7 @@ const { default: AxeBuilder } = require("@axe-core/playwright");
     "Nadia Putri",
   );
   await page.getByRole("link", { name: "Aktivitas", exact: true }).click();
-  await page
-    .getByRole("heading", { name: "Setiap langkah punya catatan." })
-    .waitFor();
+  await page.getByRole("heading", { name: "Aktivitas rekrutmen" }).waitFor();
   // Network failure is visible and can be retried.
   await page.route("**/api/audit", (r) => r.abort());
   await page.getByRole("link", { name: "Aktivitas", exact: true }).click();
@@ -254,9 +266,7 @@ const { default: AxeBuilder } = require("@axe-core/playwright");
     .waitFor();
   await page.unroute("**/api/audit");
   await page.getByRole("button", { name: "Coba kembali" }).click();
-  await page
-    .getByRole("heading", { name: "Setiap langkah punya catatan." })
-    .waitFor();
+  await page.getByRole("heading", { name: "Aktivitas rekrutmen" }).waitFor();
   assert.deepEqual(errors, []);
   assert.deepEqual(badResponses, []);
   assert.deepEqual(

@@ -1,5 +1,22 @@
 # Verification evidence
 
+## Local launcher and screening workflow
+
+- Windows with Python 3.11: started from a clean project copy in a path with
+  spaces. The launcher created its environment, installed the pinned runtime
+  dependencies, and served a healthy instance. A second launch reused the
+  installed environment. The clean copy had no `.env` or API key.
+- The 17 Python tests passed, including concurrent demo requests and demo
+  labeling with a filtered candidate list. Ruff, JavaScript syntax, and
+  Prettier checks passed.
+- The Chrome browser suite passed at 1440×1080 and 390×844 with reduced motion.
+  Axe reported no violations in five tested states. The suite checked the
+  pending-review shortcut, the stale-analysis prompt, and mobile candidate
+  columns without horizontal scrolling.
+- macOS, Linux, Python 3.12, Docker, and live Groq were outside this local run.
+
+## Original release evidence
+
 Verified locally for RecruitAI Workspace using an isolated Python 3.11 environment.
 
 | Check | Result |

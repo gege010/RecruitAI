@@ -244,6 +244,7 @@ def candidates(
     if page < 1 or size not in {10, 20, 50} or len(q) > 120:
         raise HTTPException(422, "Parameter daftar tidak valid.")
     with store.connect() as db:
+        db.execute("BEGIN")
         job = get_job(db, job_id)
         all_items = [
             store.unpack(r)
@@ -287,6 +288,7 @@ def candidates(
         "total": total,
         "page": page,
         "count": len(all_items),
+        "has_demo": any(item["source"] == "demo" for item in all_items),
         "counts": counts,
         "stale": stale,
         "run": {
@@ -320,7 +322,7 @@ def insert_candidate(db, job_id, profile, source, fingerprint=None):
     "/api/jobs/{job_id}/candidates", status_code=201, dependencies=[Depends(authorized)]
 )
 def create_candidate(job_id: str, body: ProfileInput):
-    with store.connect() as db:
+    with store.connect(write=True) as db:
         get_job(db, job_id)
         return {"id": insert_candidate(db, job_id, body.model_dump(), "manual")}
 
@@ -355,7 +357,7 @@ def upload(job_id: str, file: UploadFile = File(...), use_ai: bool = Form(False)
             422, "PDF gagal diproses. Periksa berkas atau tambahkan profil manual."
         )
     try:
-        with store.connect() as db:
+        with store.connect(write=True) as db:
             return {
                 "id": insert_candidate(db, job_id, profile, source, digest),
                 "source": source,
@@ -412,8 +414,7 @@ def edit_profile(candidate_id: str, body: ProfileInput, version: int):
 
 @app.post("/api/jobs/{job_id}/analyze", dependencies=[Depends(authorized)])
 def run_analysis(job_id: str):
-    with store.connect() as db:
-        db.execute("BEGIN IMMEDIATE")
+    with store.connect(write=True) as db:
         job = get_job(db, job_id)
         items = [
             store.unpack(r)
@@ -502,7 +503,7 @@ def audit_log():
 
 @app.post("/api/demo", status_code=201, dependencies=[Depends(authorized)])
 def demo():
-    with store.connect() as db:
+    with store.connect(write=True) as db:
         if db.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]:
             raise HTTPException(
                 409, "Contoh hanya dapat dimuat pada ruang kerja kosong."

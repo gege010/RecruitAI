@@ -47,7 +47,10 @@ components:
 The reference world is a recruiter's organized assessment desk: a quiet navy
 cabinet, white dossiers, restrained index tabs, and legible evidence. This is a
 product workspace for Indonesian HR teams, not a marketing landing page.
-The signature is a segmented evidence meter alongside a transparent criteria rail.
+The signature is a three-tab screening index paired with a segmented evidence
+meter and a visible criteria rail. The index highlights the current stage and
+shows the next action for the selected vacancy. The first-visit view uses the
+same sequence and offers a clearly labeled sample workspace.
 
 User references inform restraint, hierarchy, useful motion and component detail:
 Impeccable, Taste Skill, Emil Kowalski, Apple Design, UI UX Pro Max. Avoid purple
@@ -56,7 +59,8 @@ gradients, glass cards, ornamental dashboards, and unsupported AI confidence cla
 Runtime CSS in `web/styles.css` is the canonical token owner (model B).
 This document mirrors it; update both in the same change. `tests/test_design.py`
 checks the color mapping. Locale: id-ID, Asia/Jakarta dates. Primary use: desktop
-recruiting; narrow screens preserve the workflow with table scrolling.
+recruiting. On phones the candidate table keeps rank, score and status in view
+by collapsing the decorative meter, avatar and duplicate review action.
 
 ## Colors
 
@@ -72,15 +76,16 @@ defer to system contrast.
 Manrope supplies titles and numeric emphasis; DM Sans supplies body, controls,
 and data. Fonts are self-hosted with OFL licenses. Main titles 32px, dialog titles
 23px, form/body 12–14px, compact table utility text. Segoe UI is the fallback.
-Metrics use tabular numbers. Keep candidate names intact; secondary headlines may
+Ranks and scores use tabular numbers. Keep candidate names intact; secondary headlines may
 truncate because full detail is available in the profile.
 
 ## Layout
 
 238px sidebar, 73px topbar, 42px content padding. At 1200px the sidebar becomes
 210px. At 1000px the assessment rail moves beneath the table. At 760px navigation
-becomes a horizontal strip. The table owns horizontal overflow; forms never
-inherit its height. Main content grows naturally; dialogs scroll within 90dvh.
+becomes a horizontal strip. Below 600px it fits all four sections in one row
+and the candidate table uses compact columns. Main content grows naturally;
+dialogs scroll within 90dvh.
 
 ## Elevation & Depth
 

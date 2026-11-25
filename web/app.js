@@ -177,8 +177,8 @@ async function loadJobs() {
   state.job = currentJob();
 }
 
-function heading(eyebrow, title, description, actions = "") {
-  return `<div class="page-heading"><div><span class="eyebrow">${eyebrow}</span><h1>${title}</h1><p>${description}</p></div><div class="actions">${actions}</div></div>`;
+function heading(title, description, actions = "") {
+  return `<div class="page-heading"><div><h1>${title}</h1><p>${description}</p></div><div class="actions">${actions}</div></div>`;
 }
 
 function jobStrip() {
@@ -190,15 +190,17 @@ function bindJobSelect() {
     e.target.value = state.job.id;
     guardPageChange(() => {
       state.job = job;
+      clearTimeout(searchTimer);
       state.page = 1;
       state.q = "";
+      state.status = "all";
       render();
     });
   });
 }
 
 function rail() {
-  return `<aside class="rail" aria-label="Konteks analisis"><section class="rail-panel"><div class="rail-title"><h3>Prioritas penilaian</h3>${icon("sliders")}</div><p>Disesuaikan dengan kebutuhan posisi ini.</p><div class="weight-list">${keys.map((k) => `<div class="weight-row"><div class="weight-label"><span>${labels[k]}</span><strong>${Math.round(state.job.weights[k])}%</strong></div><div class="weight-track"><progress value="${state.job.weights[k]}" max="100" aria-label="Bobot ${labels[k]}"></progress></div></div>`).join("")}</div><button class="button full" id="edit-weights">Sesuaikan kriteria ${icon("arrow")}</button></section><section class="rail-panel method-panel"><div class="method-label">DI BALIK PENILAIAN</div><h3>Satu peringkat.<br>Tiga sudut pandang.</h3><p>Setiap kandidat dibandingkan lewat tiga metode, lalu digabung menjadi peringkat yang dapat ditelusuri.</p><div class="method-tags"><span>SAW</span><span>Weighted Product</span><span>TOPSIS</span></div><div class="method-foot">${icon("shield")}<span>Skor menunjukkan kesesuaian bukti, bukan jaminan kinerja kandidat.</span></div></section></aside>`;
+  return `<aside class="rail" aria-label="Konteks analisis"><section class="rail-panel"><div class="rail-title"><h3>Prioritas penilaian</h3>${icon("sliders")}</div><p>Disesuaikan dengan kebutuhan posisi ini.</p><div class="weight-list">${keys.map((k) => `<div class="weight-row"><div class="weight-label"><span>${labels[k]}</span><strong>${Math.round(state.job.weights[k])}%</strong></div><div class="weight-track"><progress value="${state.job.weights[k]}" max="100" aria-label="Bobot ${labels[k]}"></progress></div></div>`).join("")}</div><button class="button full" id="edit-weights">Sesuaikan kriteria ${icon("arrow")}</button></section><details class="rail-panel method-panel"><summary>Cara membaca peringkat</summary><p>Peringkat menggabungkan tiga metode yang membandingkan bukti pada profil dengan kriteria lowongan.</p><div class="method-tags"><span>SAW</span><span>Weighted Product</span><span>TOPSIS</span></div><div class="method-foot">${icon("shield")}<span>Skor menunjukkan kesesuaian bukti, bukan jaminan kinerja kandidat.</span></div></details></aside>`;
 }
 
 async function render() {
@@ -217,6 +219,7 @@ async function render() {
     activity: "Aktivitas",
   };
   document.title = `${viewLabels[state.view]} · RecruitAI`;
+  $("#nav-count").textContent = state.job?.candidate_count ?? 0;
   $("#breadcrumb").textContent = viewLabels[state.view];
   $$("nav a").forEach((a) => {
     a.classList.toggle("active", a.dataset.view === state.view);
@@ -248,11 +251,7 @@ async function render() {
     if (id !== state.request) return;
     if (!state.session.authenticated) return;
     content.innerHTML =
-      heading(
-        "RUANG KERJA",
-        "Koneksi perlu diperiksa",
-        "Data Anda tetap tersimpan.",
-      ) +
+      heading("Koneksi perlu diperiksa", "Data Anda tetap tersimpan.") +
       `<section class="panel empty">${icon("info")}<h2>Ruang kerja belum dapat dimuat</h2><p>${esc(error.message)}</p><button class="button primary" id="retry">Coba kembali</button></section>`;
     $("#retry").onclick = () => render();
   } finally {
@@ -265,13 +264,7 @@ async function render() {
 }
 
 function renderWelcome() {
-  content.innerHTML =
-    heading(
-      "RUANG SELEKSI",
-      "Temukan kecocokan. Pahami alasannya.",
-      "Ruang yang tenang untuk keputusan rekrutmen yang lebih terarah.",
-    ) +
-    `<section class="panel empty">${icon("briefcase")}<h2>Mulai dari posisi yang Anda cari.</h2><p>Tentukan kebutuhan posisi, tambahkan CV, lalu tinjau kandidat berdasarkan bukti yang relevan.</p><div class="actions"><button class="button primary" id="new-job">${icon("plus")}Buat lowongan pertama</button><button class="button" id="demo">Jelajahi data contoh ${icon("arrow")}</button></div><small class="activity-note">Data contoh berisi profil fiktif dan hanya dimuat atas pilihan Anda.</small></section>`;
+  content.innerHTML = `<section class="welcome-desk"><div class="welcome-copy"><h1>Mulai seleksi kandidat</h1><p>Tentukan kebutuhan posisi, bandingkan bukti dari CV, lalu catat siapa yang ingin Anda tindak lanjuti.</p><div class="actions"><button class="button primary" id="new-job">${icon("plus")}Buat lowongan pertama</button><button class="button" id="demo">Jelajahi data contoh ${icon("arrow")}</button></div><small>Data contoh memuat enam profil fiktif.</small></div><ol class="welcome-index" aria-label="Alur seleksi"><li><span>01</span><div><strong>Tetapkan kebutuhan</strong><p>Isi persyaratan dan bobot untuk posisi ini.</p></div></li><li><span>02</span><div><strong>Kumpulkan profil</strong><p>Unggah CV PDF atau isi profil secara manual.</p></div></li><li><span>03</span><div><strong>Bandingkan dan tinjau</strong><p>Jalankan analisis, periksa bukti, dan catat keputusan.</p></div></li></ol></section>`;
   $("#new-job").onclick = () => jobForm();
   $("#demo").onclick = async (e) => {
     await action(e.currentTarget, async () => {
@@ -283,51 +276,54 @@ function renderWelcome() {
   };
 }
 
+function screeningGuide(list) {
+  let step = 0;
+  let title = list.count
+    ? "Tambahkan satu kandidat lagi"
+    : "Tambahkan kandidat pertama";
+  let detail = "Analisis perbandingan membutuhkan minimal dua kandidat.";
+  let next = `<button class="button primary" id="upload">${icon("plus")}Tambah kandidat</button>`;
+  if (list.count >= 2 && (!list.run || list.stale)) {
+    step = 1;
+    title = list.stale
+      ? "Perbarui hasil analisis"
+      : "Kandidat siap dibandingkan";
+    detail = list.stale
+      ? "Kandidat atau kriteria berubah. Peringkat saat ini berasal dari analisis sebelumnya."
+      : "Cek kriteria posisi, lalu jalankan analisis untuk melihat kecocokan tiap kandidat.";
+    next = `<button class="button primary" id="${list.stale ? "rerun" : "analyze"}">${icon("play")}${list.stale ? "Analisis ulang" : "Jalankan analisis"}</button>`;
+  } else if (list.run) {
+    step = 2;
+    title = list.counts.new
+      ? `${list.counts.new} kandidat menunggu tinjauan`
+      : "Semua kandidat sudah ditinjau";
+    detail = list.counts.new
+      ? "Buka profil untuk memeriksa bukti dan mencatat keputusan Anda."
+      : "Lihat keputusan di daftar kandidat atau ekspor hasil analisis.";
+    next =
+      list.counts.new && state.status !== "new"
+        ? `<button class="button primary" id="review-next">Lihat yang belum ditinjau ${icon("arrow")}</button>`
+        : "";
+  }
+  return `<section class="screening-guide" aria-labelledby="next-step"><ol class="screening-index" aria-label="Tahap seleksi">${["Profil", "Analisis", "Tinjauan"].map((label, index) => `<li${index === step ? ' aria-current="step"' : ""}><span aria-hidden="true">${index < step ? icon("check") : index + 1}</span>${label}</li>`).join("")}</ol><div class="screening-next"><div><h2 id="next-step">${title}</h2><p>${detail}</p></div>${next}</div></section>`;
+}
+
 function renderCandidates() {
   const d = state.list;
   $("#nav-count").textContent = d.count;
-  const demo = d.items.some((c) => c.source === "demo");
-  const actions = `<button class="button" id="export" ${!d.run ? "disabled" : ""}>${icon("download")}Ekspor hasil</button><button class="button primary" id="upload">${icon("plus")}Tambah kandidat</button>`;
-  const metrics = [
-    ["users", "Total kandidat", d.count, "profil", "Di lowongan ini"],
-    [
-      "star",
-      "Masuk shortlist",
-      d.counts.shortlisted,
-      "kandidat",
-      "Dipilih oleh tim Anda",
-    ],
-    [
-      "clock",
-      "Menunggu tinjauan",
-      d.counts.new,
-      "kandidat",
-      "Siap untuk Anda pelajari",
-    ],
-    [
-      "chart",
-      "Analisis terakhir",
-      d.run ? "Selesai" : "—",
-      "",
-      d.run ? date(d.run.created_at) : "Belum ada analisis",
-    ],
-  ];
+  const actions = `<button class="button" id="export" ${!d.run ? "disabled" : ""}>${icon("download")}Ekspor hasil</button>${d.count >= 2 ? `<button class="button" id="upload">${icon("plus")}Tambah kandidat</button>` : ""}`;
   content.innerHTML =
     heading(
-      "RUANG SELEKSI",
-      "Kandidat yang tepat, lebih dekat.",
-      "Baca potensinya. Bandingkan buktinya. Tentukan langkah berikutnya.",
+      "Seleksi kandidat",
+      "Kelola profil, bandingkan kecocokan, dan catat hasil tinjauan.",
       actions,
     ) +
-    (demo
-      ? `<div class="notice demo-banner"><span>Anda sedang melihat profil contoh fiktif.</span><span>Mode eksplorasi</span></div>`
-      : "") +
     jobStrip() +
-    `<section class="metrics" aria-label="Ringkasan seleksi">${metrics.map(([i, l, v, u, n]) => `<div class="metric"><div class="metric-label">${icon(i)}${l}</div><div class="metric-value">${v}<span class="unit">${u}</span></div><div class="metric-note">${n}</div></div>`).join("")}</section>` +
-    (d.stale
-      ? `<div class="notice"><span>Kandidat atau kriteria telah berubah. Peringkat yang tampil berasal dari analisis sebelumnya.</span><button class="text-button" id="rerun">Analisis ulang ${icon("arrow")}</button></div>`
+    screeningGuide(d) +
+    (d.has_demo
+      ? `<p class="sample-note">${icon("info")} Lowongan ini memuat profil contoh fiktif.</p>`
       : "") +
-    `<div class="work-grid"><section class="table-panel"><div class="table-heading"><div><h3>Daftar kandidat <span class="subtle-count">${d.count} profil</span></h3><p>${d.run ? "Diurutkan berdasarkan hasil analisis gabungan." : "Tambahkan kandidat dan mulai perbandingan."}</p></div><button class="text-button" id="analyze" ${d.count < 2 ? "disabled" : ""}>${icon("play")}Jalankan analisis</button></div><div class="filter-tabs" aria-label="Filter status kandidat">${[
+    `<div class="work-grid"><section class="table-panel"><div class="table-heading"><div><h2>Daftar kandidat <span class="subtle-count">${d.count} profil</span></h2><p>${d.run ? `Analisis terakhir ${date(d.run.created_at)}` : "Peringkat tersedia setelah analisis."}</p></div>${d.run && !d.stale ? `<button class="text-button" id="analyze">${icon("play")}Jalankan analisis lagi</button>` : ""}</div><div class="filter-tabs" aria-label="Filter status kandidat">${[
       ["all", "Semua kandidat", d.count],
       ["shortlisted", "Shortlist", d.counts.shortlisted],
       ["new", "Belum ditinjau", d.counts.new],
@@ -340,22 +336,30 @@ function renderCandidates() {
       )
       .join(
         "",
-      )}</div><div class="table-toolbar"><div class="search">${icon("search")}<label class="sr-only" for="search">Cari nama atau keahlian</label><input type="search" id="search" placeholder="Cari nama atau keahlian…" value="${esc(state.q)}" maxlength="120" autocomplete="off"><button class="icon-button" id="clear-search" aria-label="Hapus pencarian" ${state.q ? "" : "hidden"}>${icon("x")}</button></div><span>${icon("layers")} Peringkat gabungan</span></div><div class="table-scroll">${d.items.length ? candidateTable(d.items) : `<div class="empty">${icon("users")}<h3>${d.count ? "Tidak ada kandidat yang cocok" : "Belum ada kandidat"}</h3><p>${d.count ? "Coba kata kunci lain atau reset filter." : "Unggah CV berbasis teks atau tambahkan profil secara manual."}</p><button class="button" id="empty-action">${d.count ? "Reset filter" : "Tambah kandidat"}</button></div>`}</div><div class="table-foot"><span>${d.total ? `${(d.page - 1) * 10 + 1}–${Math.min(d.page * 10, d.total)} dari ${d.total} kandidat` : "0 kandidat"}</span><div class="pagination"><button class="icon-button" id="prev-page" aria-label="Halaman sebelumnya" ${d.page === 1 ? "disabled" : ""}>${icon("left")}</button><span class="page-number">${d.page} / ${Math.max(1, Math.ceil(d.total / 10))}</span><button class="icon-button" id="next-page" aria-label="Halaman berikutnya" ${d.page * 10 >= d.total ? "disabled" : ""}>${icon("chevron")}</button></div></div></section>${rail()}</div><div class="info-strip">${icon("info")}Identitas, usia, gender, dan foto tidak digunakan untuk menghitung skor.</div>`;
+      )}</div><div class="table-toolbar"><div class="search">${icon("search")}<label class="sr-only" for="search">Cari nama atau keahlian</label><input type="search" id="search" placeholder="Cari nama atau keahlian…" value="${esc(state.q)}" maxlength="120" autocomplete="off"><button class="icon-button" id="clear-search" aria-label="Hapus pencarian" ${state.q ? "" : "hidden"}>${icon("x")}</button></div><span>${icon("layers")} Peringkat gabungan</span></div><div class="table-scroll">${d.items.length ? candidateTable(d.items) : `<div class="empty">${icon("users")}<h3>${d.count ? "Tidak ada kandidat yang cocok" : "Belum ada kandidat"}</h3><p>${d.count ? "Coba kata kunci lain atau reset filter." : "Unggah CV berbasis teks atau tambahkan profil secara manual."}</p>${d.count ? '<button class="button" id="empty-action">Reset filter</button>' : ""}</div>`}</div><div class="table-foot"><span>${d.total ? `${(d.page - 1) * 10 + 1}–${Math.min(d.page * 10, d.total)} dari ${d.total} kandidat` : "0 kandidat"}</span><div class="pagination"><button class="icon-button" id="prev-page" aria-label="Halaman sebelumnya" ${d.page === 1 ? "disabled" : ""}>${icon("left")}</button><span class="page-number">${d.page} / ${Math.max(1, Math.ceil(d.total / 10))}</span><button class="icon-button" id="next-page" aria-label="Halaman berikutnya" ${d.page * 10 >= d.total ? "disabled" : ""}>${icon("chevron")}</button></div></div></section>${rail()}</div><div class="info-strip">${icon("info")}Identitas, usia, gender, dan foto tidak digunakan untuk menghitung skor.</div>`;
   bindJobSelect();
   $("#upload").onclick = () => uploadDialog();
   $("#edit-weights").onclick = () => navigate("criteria");
-  $("#analyze").onclick = (e) => run(e.currentTarget);
-  if ($("#rerun")) $("#rerun").onclick = (e) => run(e.currentTarget);
+  const analyzeButton = $("#analyze, #rerun");
+  if (analyzeButton)
+    analyzeButton.onclick = (event) => run(event.currentTarget);
+  if ($("#review-next"))
+    $("#review-next").onclick = () => {
+      state.q = "";
+      filterCandidates("new");
+    };
   $("#export").onclick = () => {
     location.href = `/api/jobs/${state.job.id}/export`;
   };
+  function filterCandidates(status) {
+    clearTimeout(searchTimer);
+    state.status = status;
+    state.page = 1;
+    render();
+  }
   $$(".filter-tabs button").forEach(
-    (b) =>
-      (b.onclick = () => {
-        state.status = b.dataset.status;
-        state.page = 1;
-        render();
-      }),
+    (button) =>
+      (button.onclick = () => filterCandidates(button.dataset.status)),
   );
   $$(".candidate-name, [data-open]").forEach(
     (b) =>
@@ -374,12 +378,8 @@ function renderCandidates() {
   };
   if ($("#empty-action"))
     $("#empty-action").onclick = () => {
-      if (d.count) {
-        state.q = "";
-        state.status = "all";
-        state.page = 1;
-        render();
-      } else uploadDialog();
+      state.q = "";
+      filterCandidates("all");
     };
   const search = $("#search");
   let composing = false;
@@ -387,10 +387,16 @@ function renderCandidates() {
     clearTimeout(searchTimer);
     state.q = search.value;
     state.page = 1;
-    render().then(() => {
-      const fresh = $("#search");
-      fresh?.focus();
-      fresh?.setSelectionRange?.(state.q.length, state.q.length);
+    const hadFocus = document.activeElement === search;
+    const request = render();
+    const requestId = state.request;
+    request.then(() => {
+      if (requestId !== state.request || !hadFocus) return;
+      if (document.activeElement === $("#main")) {
+        const fresh = $("#search");
+        fresh?.focus({ preventScroll: true });
+        fresh?.setSelectionRange(state.q.length, state.q.length);
+      }
     });
   };
   search.addEventListener("compositionstart", () => {
@@ -420,10 +426,10 @@ function renderCandidates() {
 }
 
 function candidateTable(items) {
-  return `<table><caption class="sr-only">Kandidat untuk ${esc(state.job.title)}. Skor bukan probabilitas keberhasilan.</caption><thead><tr><th scope="col">Rank</th><th scope="col">Kandidat</th><th scope="col">Kesesuaian</th><th scope="col">Status tinjauan</th><th scope="col"><span class="sr-only">Tindakan</span></th></tr></thead><tbody>${items
+  return `<table><caption class="sr-only">Kandidat untuk ${esc(state.job.title)}. Skor bukan probabilitas keberhasilan.</caption><thead><tr><th scope="col">Peringkat</th><th scope="col">Kandidat</th><th scope="col">Kesesuaian</th><th scope="col">Status tinjauan</th><th scope="col"><span class="sr-only">Tindakan</span></th></tr></thead><tbody>${items
     .map((c, i) => {
       const r = c.result;
-      return `<tr><td><span class="rank ${r?.rank <= 3 ? "top" : ""}">${r ? String(r.rank).padStart(2, "0") : "—"}</span></td><td><div class="candidate-cell"><span class="avatar a${i % 4}">${esc(initials(c.profile.name))}</span><div><button class="candidate-name" data-id="${c.id}">${esc(c.profile.name)}</button><small>${esc(c.profile.headline || "Profil kandidat")}</small></div></div></td><td>${r ? `<div class="score-cell"><strong>${r.score.toFixed(0)}<span class="sr-only"> persen</span></strong><span class="score-track" aria-hidden="true">${Array.from({ length: 16 }, (_, n) => `<i class="${n < Math.round((r.score / 100) * 16) ? "filled" : ""} ${r.score >= 80 ? "high" : ""}"></i>`).join("")}</span></div>` : '<span class="subtle-count">Belum dianalisis</span>'}</td><td>${badge(c.status)}</td><td><button class="icon-button" data-open="${c.id}" aria-label="Tinjau ${esc(c.profile.name)}">${icon("chevron")}</button></td></tr>`;
+      return `<tr><td><span class="rank ${r?.rank <= 3 ? "top" : ""}">${r ? String(r.rank).padStart(2, "0") : "—"}</span></td><td><div class="candidate-cell"><span class="avatar a${i % 4}">${esc(initials(c.profile.name))}</span><div><button class="candidate-name" data-id="${c.id}">${esc(c.profile.name)}</button><small>${esc(c.profile.headline || "Profil kandidat")}</small></div></div></td><td>${r ? `<div class="score-cell"><strong>${r.score.toFixed(0)}%</strong><span class="score-track" aria-hidden="true">${Array.from({ length: 16 }, (_, n) => `<i class="${n < Math.round((r.score / 100) * 16) ? "filled" : ""} ${r.score >= 80 ? "high" : ""}"></i>`).join("")}</span></div>` : '<span class="subtle-count">Belum dianalisis</span>'}</td><td>${badge(c.status)}</td><td><button class="icon-button" data-open="${c.id}" aria-label="Tinjau ${esc(c.profile.name)}">${icon("chevron")}</button></td></tr>`;
     })
     .join("")}</tbody></table>`;
 }
@@ -446,13 +452,14 @@ async function action(button, fn) {
   }
 }
 async function run(button) {
+  const label = button.innerHTML;
   await action(button, async () => {
     button.textContent = "Menganalisis…";
     await api(`/api/jobs/${state.job.id}/analyze`, { method: "POST" });
     await render();
     notify("Analisis selesai. Tinjau bukti sebelum menentukan keputusan.");
   });
-  if (button.isConnected) button.innerHTML = icon("play") + "Jalankan analisis";
+  if (button.isConnected) button.innerHTML = label;
 }
 
 function renderJobs() {
@@ -462,8 +469,7 @@ function renderJobs() {
   }
   content.innerHTML =
     heading(
-      "KEBUTUHAN TIM",
-      "Setiap posisi punya ukurannya.",
+      "Lowongan",
       "Kelola kebutuhan dan konteks penilaian untuk setiap lowongan.",
       `<button class="button primary" id="new-job">${icon("plus")}Buat lowongan</button>`,
     ) +
@@ -636,8 +642,7 @@ function jobForm(job = null) {
 function renderCriteria() {
   content.innerHTML =
     heading(
-      "KRITERIA SELEKSI",
-      "Prioritas yang mencerminkan kebutuhan.",
+      "Kriteria seleksi",
       "Atur kontribusi setiap kriteria. Semua perubahan dapat ditelusuri.",
     ) +
     jobStrip() +
@@ -695,8 +700,7 @@ function renderCriteria() {
 function renderActivity(items) {
   content.innerHTML =
     heading(
-      "JEJAK KEPUTUSAN",
-      "Setiap langkah punya catatan.",
+      "Aktivitas rekrutmen",
       "Riwayat perubahan dan analisis di ruang kerja ini.",
     ) +
     `<div class="panel">${items.length ? items.map((a) => `<div class="activity-row">${icon(a.action.includes("Analisis") ? "chart" : a.action.includes("Kandidat") ? "users" : "clock")}<div><strong>${esc(a.action)}</strong><small>Referensi ${esc(a.subject)}</small></div><time datetime="${esc(a.created_at)}">${date(a.created_at)}</time></div>`).join("") : `<div class="empty">${icon("clock")}<h3>Belum ada aktivitas</h3><p>Perubahan lowongan, profil, tinjauan, dan analisis akan tercatat di sini.</p></div>`}</div><p class="activity-note">Menampilkan maksimal 100 aktivitas terbaru. Waktu ditampilkan dalam WIB. Aktor: tim rekrutmen pada ruang kerja bersama ini.</p>`;
@@ -708,7 +712,7 @@ function profileDialog(candidate) {
     r = c.result;
   showModal(
     "Tinjau kandidat",
-    `<div class="profile-heading"><span class="avatar">${esc(initials(p.name))}</span><div><h3>${esc(p.name)}</h3><p>${esc(p.headline || "Profil kandidat")}</p>${badge(c.status)}</div><div class="profile-score"><strong>${r ? r.score.toFixed(0) + "%" : "—"}</strong><small>Kesesuaian persyaratan</small></div></div>${state.list.stale ? '<div class="notice">Hasil analisis belum mengikuti perubahan terbaru.</div>' : ""}<div class="profile-meta"><div><small>Pengalaman</small>${p.experience_months === null ? "Perlu verifikasi" : p.experience_months + " bulan"}</div><div><small>Pendidikan</small>${esc(p.education || "Perlu verifikasi")}</div><div><small>Sumber profil</small>${{ demo: "Contoh fiktif", manual: "Input manual", local: "PDF · lokal", groq: "PDF · Groq AI" }[c.source] || "PDF"}</div></div><div class="profile-section"><h3>Ringkasan profil</h3><p>${esc(p.summary || "Belum ada ringkasan. Periksa profil dan lengkapi bukti kandidat.")}</p></div><button class="text-button" id="edit-profile">${icon("edit")}Verifikasi / edit profil</button><div class="profile-section"><h3>Keahlian di profil</h3><div class="skill-tags">${p.skills.map((s) => `<span>${esc(s)}</span>`).join("") || "<small>Belum ada keahlian tercatat.</small>"}</div></div>${r ? `<div class="profile-section"><h3>Bukti terhadap kebutuhan posisi</h3><p>${r.evidence.matched.length} dari ${state.job.required_skills.length} keahlian sesuai: ${esc(r.evidence.matched.join(", ") || "belum ada")}.</p>${r.evidence.missing.length ? `<p>Belum ditemukan: ${esc(r.evidence.missing.join(", "))}.</p>` : ""}${r.evidence.missing_certifications.length ? `<p>Sertifikasi belum ditemukan: ${esc(r.evidence.missing_certifications.join(", "))}.</p>` : ""}${r.evidence.missing_languages.length ? `<p>Bahasa belum ditemukan: ${esc(r.evidence.missing_languages.join(", "))}.</p>` : ""}${r.evidence.unknown.length ? `<div class="notice">${esc(r.evidence.unknown.join(" · "))}</div>` : ""}</div><div class="profile-section"><h3>Rincian penilaian</h3>${keys.map((k) => `<div class="dimension"><span>${labels[k]}</span><progress value="${r.dimensions[k] * 100}" max="100" aria-label="${labels[k]} ${Math.round(r.dimensions[k] * 100)} persen"></progress><span>${Math.round(r.dimensions[k] * 100)}%</span></div>`).join("")}<p class="activity-note">Peringkat gabungan #${r.rank}. SAW #${r.algorithms.saw_rank}, WP #${r.algorithms.wp_rank}, TOPSIS #${r.algorithms.topsis_rank}. Skor bukan probabilitas diterima.</p></div>` : '<div class="notice">Jalankan analisis untuk melihat rincian penilaian kandidat.</div>'}<form id="review-form" novalidate><div class="profile-section"><h3>Langkah berikutnya</h3><div class="review-controls">${Object.entries(
+    `<div class="profile-heading"><span class="avatar">${esc(initials(p.name))}</span><div><h3>${esc(p.name)}</h3><p>${esc(p.headline || "Profil kandidat")}</p>${badge(c.status)}</div><div class="profile-score"><strong>${r ? r.score.toFixed(0) + "%" : "—"}</strong><small>Kesesuaian persyaratan</small></div></div>${state.list.stale ? '<div class="notice">Hasil analisis belum mengikuti perubahan terbaru.</div>' : ""}<div class="profile-meta"><div><small>Pengalaman</small>${p.experience_months === null ? "Perlu verifikasi" : p.experience_months + " bulan"}</div><div><small>Pendidikan</small>${esc(p.education || "Perlu verifikasi")}</div><div><small>Sumber profil</small>${{ demo: "Contoh fiktif", manual: "Input manual", local: "PDF · lokal", groq: "PDF · Groq AI" }[c.source] || "PDF"}</div></div><div class="profile-section"><h3>Ringkasan profil</h3><p>${esc(p.summary || "Belum ada ringkasan. Periksa profil dan lengkapi bukti kandidat.")}</p></div><button class="text-button" id="edit-profile">${icon("edit")}Verifikasi / edit profil</button><div class="profile-section"><h3>Keahlian di profil</h3><div class="skill-tags">${p.skills.map((s) => `<span>${esc(s)}</span>`).join("") || "<small>Belum ada keahlian tercatat.</small>"}</div></div>${r ? `<div class="profile-section"><h3>Bukti terhadap kebutuhan posisi</h3><p>${r.evidence.matched.length} dari ${r.evidence.matched.length + r.evidence.missing.length} keahlian sesuai: ${esc(r.evidence.matched.join(", ") || "belum ada")}.</p>${r.evidence.missing.length ? `<p>Belum ditemukan: ${esc(r.evidence.missing.join(", "))}.</p>` : ""}${r.evidence.missing_certifications.length ? `<p>Sertifikasi belum ditemukan: ${esc(r.evidence.missing_certifications.join(", "))}.</p>` : ""}${r.evidence.missing_languages.length ? `<p>Bahasa belum ditemukan: ${esc(r.evidence.missing_languages.join(", "))}.</p>` : ""}${r.evidence.unknown.length ? `<div class="notice">${esc(r.evidence.unknown.join(" · "))}</div>` : ""}</div><div class="profile-section"><h3>Rincian penilaian</h3>${keys.map((k) => `<div class="dimension"><span>${labels[k]}</span><progress value="${r.dimensions[k] * 100}" max="100" aria-label="${labels[k]} ${Math.round(r.dimensions[k] * 100)} persen"></progress><span>${Math.round(r.dimensions[k] * 100)}%</span></div>`).join("")}<p class="activity-note">Peringkat gabungan #${r.rank}. SAW #${r.algorithms.saw_rank}, WP #${r.algorithms.wp_rank}, TOPSIS #${r.algorithms.topsis_rank}. Skor bukan probabilitas diterima.</p></div>` : '<div class="notice">Jalankan analisis untuk melihat rincian penilaian kandidat.</div>'}<form id="review-form" novalidate><div class="profile-section"><h3>Langkah berikutnya</h3><div class="review-controls">${Object.entries(
       statuses,
     )
       .map(
@@ -986,7 +990,11 @@ async function navigate(view) {
   clearTimeout(searchTimer);
   guardPageChange(() => {
     state.view = view;
-    render();
+    window.scrollTo(0, 0);
+    render().then(() => {
+      if (state.view === view && state.session?.authenticated)
+        $("#main").focus({ preventScroll: true });
+    });
   });
 }
 
@@ -1049,7 +1057,8 @@ async function start() {
     )
       ? url.searchParams.get("status")
       : "all";
-    state.page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+    const page = Number(url.searchParams.get("page"));
+    state.page = Number.isSafeInteger(page) && page > 0 ? page : 1;
     await render();
   } catch (error) {
     content.innerHTML = `<section class="panel empty"><h2>Ruang kerja belum terhubung</h2><p>${esc(error.message)}</p><button class="button" id="start-retry">Coba kembali</button></section>`;
@@ -1075,8 +1084,12 @@ $("#modal").addEventListener("cancel", (e) => {
   if (!$("#modal-close").disabled) confirmDiscard(finishModal);
 });
 $("#logout").onclick = async () => {
-  await api("/api/logout", { method: "POST" });
-  location.reload();
+  guardPageChange(() =>
+    action($("#logout"), async () => {
+      await api("/api/logout", { method: "POST" });
+      location.reload();
+    }),
+  );
 };
 window.addEventListener("beforeunload", (e) => {
   if (state.dirty) {
